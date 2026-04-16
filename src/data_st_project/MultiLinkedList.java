@@ -10,75 +10,80 @@ public class MultiLinkedList {
     }
 
     // taşı bırakınca çalışcak
-       public void dropTile(int value, int col) {
-           
-       if (head == null) {
-            Node newNode = new Node(value, 6, col);
-            head = newNode;
+       // Yukarıdan taşı bıraktığımızda çalışacak ana oyun mekaniği (Zincirleme Birleşmeli)
+    public void dropTile(int value, int col) {
+        // Eğer liste tamamen boşsa, ilk taşı head yapıyoruz ve EN ALTA (6. satıra) düşürüyoruz
+        if (head == null) {
+            head = new Node(value, 6, col);
             return;
         }
-        
-        
-        Node newNode = new Node(value, 0, col);
 
         Node current = head;
-        Node prevColNode = null; // bir önceki sütundaki düğümü takip etmek için
+        Node prevCol = null;
 
-        //doğru sütuna gitmek için sağa ilerleme 
+        // 1. ADIM: İstenilen sütunu bul (Sağa doğru ilerle)
         while (current != null && current.col < col) {
-            prevColNode = current;
+            prevCol = current;
             current = current.right;
         }
 
-        
+        // 2. ADIM: Sütun tamamen boşsa (ilk defa taş atılıyorsa)
         if (current == null || current.col > col) {
-            // sütun boşsa taşı en alt satıra gider
-            newNode.row = 6;
-
-            if (prevColNode == null) {
-                // eğer liste boş değil ama eklenecek sütun en başa denk geliyorsa col=0 gibi
-                // ve headin sütunu bundan büyükse yeni head bu olur
+            Node newNode = new Node(value, 6, col); // En alta düşer
+            if (prevCol == null) {
+                // En başa ekleme
                 newNode.right = head;
                 head = newNode;
             } else {
-                // qraya veya sona ekleme
-                newNode.right = prevColNode.right;
-                prevColNode.right = newNode;
+                // Araya veya sona ekleme
+                newNode.right = prevCol.right;
+                prevCol.right = newNode;
             }
             return;
         }
 
-        //doğru sütunu bulduğumuzda
-        // aynı değere sahip taşı bulma
-        Node prevRowNode = null;
-        while (current != null) {
-            
-            if (current.value == value) {
-                // eni taş ekleme 
-                current.value *= 2;
-                return; 
-            }
-            prevRowNode = current;
-            current = current.down;
-        }
+        // 3. ADIM: Sütun boş DEĞİL. current şu an o sütunun en üstteki taşı.
+        // Gelen taş, en üstteki taşla aynı değere sahip mi? (BİRLEŞME KONTROLÜ)
+        if (current.value == value) {
+            current.value *= 2; // Çarpıştılar ve üstteki taşın değeri iki katına çıktı
 
-        
-        if (prevRowNode != null && prevRowNode.row > 0) {
-            newNode.row = prevRowNode.row - 1;
-            newNode.down = prevRowNode; 
-            
-            //sağ-sol bağlantılarını güncelleme
-             if (prevColNode == null) {
-                 newNode.right = head;
-                 head = newNode;
-             } else {
-                 newNode.right = prevColNode.right;
-                 prevColNode.right = newNode;
-             }
+            // ZİNCİRLEME BİRLEŞME (Cascade Merge)
+            // Ya yeni oluşan değer, onun altındakiyle de aynıysa?
+            while (current.down != null && current.value == current.down.value) {
+                // Alttaki taş iki katına çıkar (çünkü üstteki eriyip onun üstüne düşüyor)
+                current.down.value *= 2;
+                
+                // Üstteki taşı (current) aradan çıkarmalıyız. Sütun başlığını current.down yapıyoruz.
+                current.down.right = current.right; // Sağ bağı alt taşa devret
+                
+                if (prevCol == null) {
+                    head = current.down;
+                } else {
+                    prevCol.right = current.down;
+                }
+                
+                // Kontrole bir alt satırdan devam et
+                current = current.down; 
+            }
         } else {
-            // eğer sütun tamamen doluysa oyun bitmiş demektir
-            
-            System.out.println("Sütun dolu, taş eklenemedi!");
+            // 4. ADIM: Değerler aynı değilse, yeni taşı mevcut taşın üstüne (row - 1) koy
+            if (current.row > 0) {
+                Node newNode = new Node(value, current.row - 1, col);
+                newNode.down = current;
+                
+                // Sütun başlığı artık newNode oldu, sağ bağları o devralmalı
+                newNode.right = current.right;
+                current.right = null; // Eski başlığın sağla ilişkisini kesiyoruz (Spagetti olmasın diye)
+                
+                if (prevCol == null) {
+                    head = newNode;
+                } else {
+                    prevCol.right = newNode;
+                }
+            } else {
+                // Hoca PDF'te sütun dolduğunda oyun biter demişti.
+                System.out.println("Oyun Bitti veya Hatalı Hamle: Sütun " + col + " tamamen dolu!");
+            }
         }
     }
 
