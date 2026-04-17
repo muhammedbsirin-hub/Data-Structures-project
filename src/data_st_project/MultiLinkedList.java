@@ -80,15 +80,13 @@ public class MultiLinkedList {
         fixRows(col);
     }
 
-    // ─────────────────────────────────────────
-    //  Sutunun basina yeni tas ekle
-    // ─────────────────────────────────────────
+    
     private void insertTop(int value, int col) {
         int newRow = getLowestEmptyRow(col); // tasin oturacagi satir
 
         Node newNode = new Node(value, newRow, col);
 
-        // Linked list'e ekle: col'a gore sirali right zinciri
+       
         Node cur = head;
         Node prev = null;
         while (cur != null && cur.col < col) {
@@ -97,12 +95,12 @@ public class MultiLinkedList {
         }
 
         if (cur == null || cur.col > col) {
-            // Bu sutunda hic tas yok
+           
             newNode.right = cur;
             if (prev == null) head = newNode;
             else              prev.right = newNode;
         } else {
-            // cur.col == col → sutunda tas var, newNode en uste gelir
+            
             newNode.down  = cur;
             newNode.right = cur.right;
             cur.right = null;
