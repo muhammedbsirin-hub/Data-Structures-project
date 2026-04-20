@@ -1,35 +1,30 @@
 package data_st_project;
-
+ 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
 import java.util.ArrayList;
-
+ 
 public class Game_menu extends JFrame {
-
-    // ── Grid hücreleri (7 satır × 5 sütun) ──────────────────────────
+ 
+    // 7x5 grid labellari
     private JLabel[][] cells = new JLabel[7][5];
-
-    // ── Preview satırı (atılacak taşı gösterir) ──────────────────────
+ 
+    // ust satirda atacagimiz tasi gosteren kisim
     private JLabel[] previewCells = new JLabel[5];
-
-    // ── Kontrol paneli bileşenleri ───────────────────────────────────
+ 
     private JButton btnPrev, btnNext;
     private JLabel  lblStep;
-
-    // ── Tüm hamlelerin önceden hesaplanmış snapshot'ları ─────────────
-    // Her snapshot: int[7][5] değer matrisi
+ 
+    // her adimin grid halini tutan listeler
     private ArrayList<int[][]> snapshots   = new ArrayList<>();
-    // Her adımdaki preview bilgisi {değer, sütun} (-1 = yok)
     private ArrayList<int[]>   previewData = new ArrayList<>();
-    // Birleşen hücre koordinatları (null = birleşme yok)
     private ArrayList<int[]>   mergeCoords = new ArrayList<>();
-    // Adım açıklamaları
     private ArrayList<String>  stepLabels  = new ArrayList<>();
-
+ 
     private int currentStep = 0;
-
-    // ── Renk paleti (değere göre) ─────────────────────────────────────
+ 
+    // degere gore arka plan rengi
     private Color getBgColor(int val) {
         switch (val) {
             case 2:   return new Color(0xEEE4DA);
@@ -41,66 +36,64 @@ public class Game_menu extends JFrame {
             case 128: return new Color(0xEDCF72);
             case 256: return new Color(0xEDCC61);
             case 512: return new Color(0xEDC850);
-            default:  return new Color(0xCDC1B4); // bos
+            default:  return new Color(0xCDC1B4);
         }
     }
-
+ 
     private Color getFgColor(int val) {
         return (val <= 4) ? new Color(0x776E65) : Color.WHITE;
     }
-
-    // ── Hamle listesi ─────────────────────────────────────────────────
+ 
+    // hamle sirasi
     private static final int[][] MOVES = {
         {2,0},{2,3},{4,1},{2,2},{4,4},{2,1},{4,4},{8,0},
         {8,0},{32,1},{2,2},{64,2},{16,3},{64,1},{32,2},{16,0},
-        {16,4},{32,2},{64,1},{8,3},{4,3},{2,1},{2,3},{2,1},
-        {64,2},{32,2},{16,2},{8,2},{8,2},{4,1},{8,1}
+        {16,3},{32,2},{64,1},{8,1},{4,1},{2,2},{2,2},{16,3},
+        {2,2},{64,3},{32,2},{16,3},{8,3},{4,1},{8,1}
     };
-
-    // ─────────────────────────────────────────────────────────────────
+ 
     public Game_menu() {
         setTitle("Drop Number Game");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLayout(new BorderLayout(8, 8));
         getContentPane().setBackground(new Color(0xBBADA0));
-
+ 
         buildUI();
         precomputeSnapshots();
         renderStep(0);
-
+ 
         pack();
         setLocationRelativeTo(null);
         setVisible(true);
     }
-
-    // ── Arayüz kurulumu ───────────────────────────────────────────────
+ 
+    // arayuz olusturma
     private void buildUI() {
-
-        // ── Üst panel: kontroller ─────────────────────────────────────
+ 
+        // ust panel - geri ileri butonlari
         JPanel topPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 16, 8));
         topPanel.setBackground(new Color(0xBBADA0));
-
+ 
         btnPrev = makeButton("◀  Geri");
         btnNext = makeButton("Ileri  ▶");
         lblStep = new JLabel("Adim 0 / " + MOVES.length, SwingConstants.CENTER);
         lblStep.setFont(new Font("Segoe UI", Font.BOLD, 16));
         lblStep.setForeground(Color.WHITE);
         lblStep.setPreferredSize(new Dimension(160, 32));
-
+ 
         btnPrev.addActionListener(e -> navigate(-1));
         btnNext.addActionListener(e -> navigate(+1));
-
+ 
         topPanel.add(btnPrev);
         topPanel.add(lblStep);
         topPanel.add(btnNext);
         add(topPanel, BorderLayout.NORTH);
-
-        // ── Orta: preview + grid ──────────────────────────────────────
+ 
         JPanel centerPanel = new JPanel(new BorderLayout(0, 4));
         centerPanel.setBackground(new Color(0xBBADA0));
         centerPanel.setBorder(BorderFactory.createEmptyBorder(0, 12, 12, 12));
-
-        // Preview satırı
+ 
+        // preview satiri
         JPanel previewPanel = new JPanel(new GridLayout(1, 5, 6, 0));
         previewPanel.setBackground(new Color(0xBBADA0));
         previewPanel.setBorder(BorderFactory.createEmptyBorder(4, 0, 4, 0));
@@ -108,8 +101,8 @@ public class Game_menu extends JFrame {
             previewCells[j] = makeCell();
             previewPanel.add(previewCells[j]);
         }
-
-        // Grid paneli
+ 
+        // oyun tablosu
         JPanel gridPanel = new JPanel(new GridLayout(7, 5, 6, 6));
         gridPanel.setBackground(new Color(0x9F8F85));
         gridPanel.setBorder(BorderFactory.createEmptyBorder(6, 6, 6, 6));
@@ -119,12 +112,13 @@ public class Game_menu extends JFrame {
                 gridPanel.add(cells[i][j]);
             }
         }
-
+ 
         centerPanel.add(previewPanel, BorderLayout.NORTH);
         centerPanel.add(gridPanel,    BorderLayout.CENTER);
         add(centerPanel, BorderLayout.CENTER);
     }
-
+ 
+    // label hucre olustur
     private JLabel makeCell() {
         JLabel lbl = new JLabel("", SwingConstants.CENTER);
         lbl.setFont(new Font("Segoe UI", Font.BOLD, 28));
@@ -134,7 +128,7 @@ public class Game_menu extends JFrame {
         lbl.setBorder(BorderFactory.createLineBorder(new Color(0xBBADA0), 2, true));
         return lbl;
     }
-
+ 
     private JButton makeButton(String text) {
         JButton btn = new JButton(text);
         btn.setFont(new Font("Segoe UI", Font.BOLD, 14));
@@ -145,22 +139,22 @@ public class Game_menu extends JFrame {
         btn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         return btn;
     }
-
-    // ── İleri/Geri navigasyonu ────────────────────────────────────────
+ 
+    // ileri geri gecis
     private void navigate(int dir) {
         int next = currentStep + dir;
         if (next < 0 || next >= snapshots.size()) return;
         currentStep = next;
         renderStep(currentStep);
     }
-
-    // ── Adımı ekrana yansıt ───────────────────────────────────────────
+ 
+    // adimi ekrana yansit
     private void renderStep(int step) {
         int[][] grid    = snapshots.get(step);
         int[]   preview = previewData.get(step);
         int[]   merge   = mergeCoords.get(step);
-
-        // Grid hücreleri
+ 
+        // grid hucreleri guncelle
         for (int i = 0; i < 7; i++) {
             for (int j = 0; j < 5; j++) {
                 int val = grid[i][j];
@@ -175,8 +169,8 @@ public class Game_menu extends JFrame {
                 }
             }
         }
-
-        // Preview satırı
+ 
+        // preview satirini guncelle
         for (int j = 0; j < 5; j++) {
             previewCells[j].setText("");
             previewCells[j].setBackground(new Color(0xCDC1B4));
@@ -188,21 +182,20 @@ public class Game_menu extends JFrame {
             previewCells[pCol].setForeground(getFgColor(pVal));
             previewCells[pCol].setBackground(getBgColor(pVal).brighter());
         }
-
-        // Adım etiketi
+ 
         lblStep.setText(stepLabels.get(step));
-
-        // Buton durumu
+ 
+        // buton aktiflik durumu
         btnPrev.setEnabled(step > 0);
         btnNext.setEnabled(step < snapshots.size() - 1);
-
-        // Birleşme flash efekti
+ 
+        // birlesme varsa flash yap
         if (merge != null) {
             flashCell(merge[0], merge[1]);
         }
     }
-
-    // ── Birleşme flash animasyonu ─────────────────────────────────────
+ 
+    // birlesince hucre rengi degisiyor
     private void flashCell(int row, int col) {
         JLabel lbl = cells[row][col];
         Color original = lbl.getBackground();
@@ -215,76 +208,73 @@ public class Game_menu extends JFrame {
         });
         t.start();
     }
-
-    // ── Tüm snapshot'ları önceden hesapla ────────────────────────────
+ 
+    // tum adim snapshotlarini onceden hesapla
     private void precomputeSnapshots() {
-        // Snapshot engine: kendi içinde MultiLinkedList kullanır
         SnapshotEngine engine = new SnapshotEngine();
-
-        // Adım 0: boş grid
+ 
+        // bos baslangic
         snapshots.add(engine.getGrid());
         previewData.add(new int[]{-1, -1});
         mergeCoords.add(null);
         stepLabels.add("Baslangic");
-
+ 
         for (int i = 0; i < MOVES.length; i++) {
             int val = MOVES[i][0];
             int col = MOVES[i][1];
-
-            // Preview: bu hamleden önce grid + atılacak taş bilgisi
+ 
+            // hamleden once preview goster
             snapshots.add(engine.getGrid());
             previewData.add(new int[]{val, col});
             mergeCoords.add(null);
             stepLabels.add("Adim " + (i+1) + "/" + MOVES.length
-                    + "  →  Sutun " + col + "  :  " + val);
-
-            // Hamleyi uygula, merge bilgisini al
+                    + "  ->  Sutun " + col + "  :  " + val);
+ 
             int[] merged = engine.dropTile(val, col);
-
-            // Sonuç snapshot
+ 
+            // hamle sonrasi sonuc
             snapshots.add(engine.getGrid());
             previewData.add(new int[]{-1, -1});
-            mergeCoords.add(merged); // null ise birleşme yok
+            mergeCoords.add(merged);
             stepLabels.add("Adim " + (i+1) + "/" + MOVES.length + "  [sonuc]");
         }
     }
-
-    // ─────────────────────────────────────────────────────────────────
-    //  Snapshot Engine — MultiLinkedList'in int[][] yansımasını tutar
-    // ─────────────────────────────────────────────────────────────────
+ 
+    // multilinkedlist uzerinde calisip grid snapshoti veren ic sinif
     private static class SnapshotEngine {
         private final MultiLinkedList mll = new MultiLinkedList();
-
-        /** Taşı düşür; birleşme olduysa {row, col} döndür, yoksa null */
+ 
+        // tasi dusur, birlesme olduysa koordinat dondur
         int[] dropTile(int value, int col) {
             boolean hadMerge = false;
             int mergeRow = -1;
-
+ 
             if (mll.getLowestEmptyRow(col) < 0) return null;
-
+ 
             mll.insertTopPublic(value, col);
-
+ 
             boolean merged = true;
             while (merged) {
                 merged = false;
                 Node colHead = mll.getColumnHead(col);
                 if (colHead != null && colHead.down != null
                         && colHead.value == colHead.down.value) {
-                    int newVal = colHead.value * 2;
+                    int newVal  = colHead.value * 2;
                     Node second = colHead.down;
                     second.value = newVal;
                     second.row   = colHead.row + 1;
                     mll.removeColumnHeadPublic(col, second);
-                    hadMerge  = true;
-                    mergeRow  = second.row;
-                    merged    = true;
+                    hadMerge = true;
+                    mergeRow = second.row;
+                    merged   = true;
                 }
             }
             mll.fixRowsPublic(col);
-
+ 
             return hadMerge ? new int[]{mergeRow, col} : null;
         }
-
+ 
+        // o anki grid degerlerini al
         int[][] getGrid() {
             int[][] g = new int[7][5];
             for (int i = 0; i < 7; i++)
@@ -293,8 +283,7 @@ public class Game_menu extends JFrame {
             return g;
         }
     }
-
-    // ── Ana metot ─────────────────────────────────────────────────────
+ 
     public static void main(String[] args) {
         try {
             for (UIManager.LookAndFeelInfo info : UIManager.getInstalledLookAndFeels()) {
@@ -304,7 +293,7 @@ public class Game_menu extends JFrame {
                 }
             }
         } catch (Exception ignored) {}
-
+ 
         SwingUtilities.invokeLater(() -> new Game_menu());
     }
 }
