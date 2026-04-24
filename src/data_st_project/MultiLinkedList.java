@@ -7,7 +7,7 @@ public class MultiLinkedList {
         this.head = null;
     }
 
-    // sutundaki ilk nodu bul
+    // hangi sütunda olduğumuzu buluyoruz
     public Node getColumnHead(int col) {
         Node cur = head;
         while (cur != null) {
@@ -18,7 +18,7 @@ public class MultiLinkedList {
         return null;
     }
 
-    // sutunda kac bos yer var
+    // bulduğumuz sütunda ki ilk boş olan yere iniyoruz 
     public int getLowestEmptyRow(int col) {
         Node cur = getColumnHead(col);
         int count = 0;
@@ -26,10 +26,10 @@ public class MultiLinkedList {
             count++;
             cur = cur.down;
         }
-        return 6 - count;
+        return 6 - count;//mesela count 5 çıkarsa 1. label boş demek
     }
 
-    // KONSOLDA testi donduren metod
+    
     public void dropTile(int value, int col) {
         if (getLowestEmptyRow(col) < 0) {
             System.out.println("Sutun " + col + " tamamen dolu!");
@@ -42,7 +42,7 @@ public class MultiLinkedList {
         while (merged) {
             merged = false;
             Node colHead = getColumnHead(col);
-            if (colHead != null && colHead.down != null && colHead.value == colHead.down.value) {
+            if (colHead != null && colHead.down != null && colHead.value == colHead.down.value) {//zincirleme olayının olduğu kıssım
                 
                 int newVal = colHead.value * 2;
                 Node second = colHead.down;
@@ -50,7 +50,7 @@ public class MultiLinkedList {
                 second.row = colHead.row + 1;
 
                 removeColumnHead(col, second);
-                System.out.println("Birlesme! Yeni tas: " + newVal);
+                System.out.println("Birlesme! Yeni tas: " + newVal);//hangi birleşmeler oldu görmek için gerekli değil çok
 
                 merged = true;
             }

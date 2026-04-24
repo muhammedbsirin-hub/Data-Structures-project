@@ -33,7 +33,7 @@ public class Game_menu extends JFrame {
         setLayout(new BorderLayout());
  
         buildUI();
-        goToStep(0); // Başlangıç durumunu yükle
+        goToStep(0); // başlangıç durumunu yükler
  
         setSize(600, 750);
         setLocationRelativeTo(null);
@@ -41,38 +41,38 @@ public class Game_menu extends JFrame {
     }
  
     private void buildUI() {
-        // Üst panel (İleri/Geri butonları)
+        // üst panel
         JPanel topPanel = new JPanel();
         topPanel.setBackground(Color.DARK_GRAY);
  
         btnPrev = new JButton("Geri");
         btnNext = new JButton("İleri");
         lblStep = new JLabel("Başlangıç", SwingConstants.CENTER);
-        lblStep.setForeground(Color.WHITE);
+        lblStep.setForeground(Color.WHITE);//renklendirme ve font kısımlarında yapay zekadan destek aldım
         lblStep.setFont(new Font("Arial", Font.BOLD, 16));
         
         btnPrev.addActionListener(e -> goToStep(currentStep - 1));
         btnNext.addActionListener(e -> goToStep(currentStep + 1));
  
-        topPanel.add(btnPrev);
+        topPanel.add(btnPrev);//buton ekleme en üste
         topPanel.add(Box.createHorizontalStrut(10));
         topPanel.add(lblStep);
         topPanel.add(Box.createHorizontalStrut(10));
         topPanel.add(btnNext);
         add(topPanel, BorderLayout.NORTH);
  
-        // Orta panel (Önizleme ve Oyun Alanı)
+        // orta panel oyun alanı
         JPanel centerPanel = new JPanel(new BorderLayout());
         
-        // Önizleme (Preview) Paneli
+        // önizleme paneli
         JPanel previewPanel = new JPanel(new GridLayout(1, 5));
         for (int j = 0; j < 5; j++) {
             previewCells[j] = makeCell();
-            previewCells[j].setBorder(BorderFactory.createMatteBorder(0, 1, 3, 1, Color.RED)); // Altını çizgiyle belli edelim
+            previewCells[j].setBorder(BorderFactory.createMatteBorder(0, 1, 3, 1, Color.RED)); // belirgin olsun diye altını kırmızı çizgi yaptım
             previewPanel.add(previewCells[j]);
         }
         
-        // Oyun Tablosu (Grid)
+        // oyun tablosu grid
         JPanel gridPanel = new JPanel(new GridLayout(7, 5));
         for (int i = 0; i < 7; i++) {
             for (int j = 0; j < 5; j++) {
@@ -81,12 +81,12 @@ public class Game_menu extends JFrame {
             }
         }
  
-        centerPanel.add(previewPanel, BorderLayout.NORTH);
+        centerPanel.add(previewPanel, BorderLayout.NORTH);//panelleri yerleştirme
         centerPanel.add(gridPanel, BorderLayout.CENTER);
         add(centerPanel, BorderLayout.CENTER);
     }
  
-    private JLabel makeCell() {
+    private JLabel makeCell() {//label oluşturma ve onların fontu fln
         JLabel lbl = new JLabel("", SwingConstants.CENTER);
         lbl.setFont(new Font("Arial", Font.BOLD, 28));
         lbl.setOpaque(true);
@@ -95,17 +95,17 @@ public class Game_menu extends JFrame {
         return lbl;
     }
 
-    // --- ARRAY KULLANMADAN İLERİ/GERİ YAPMA MANTIĞI ---
+   
     private void goToStep(int targetStep) {
         if (targetStep < 0 || targetStep > MOVES.length) return;
         
         currentStep = targetStep;
         
-        // Her adım değiştirdiğimizde listeyi sıfırlıyoruz. 
-        // Böylece geçmişi array'de tutmamıza GEREK KALMIYOR.
+        // her adım değiştirdiğimizde listeyi sıfırlıyoruz
+        // böylece geçmişi arrayde tutmuyoruz
         gameList = new MultiLinkedList();
         
-        // Sıfırdan, hedef adıma kadar olan tüm hamleleri yeniden hesapla
+        // sıfırdan aynı adımları yapıyoruz
         for (int i = 0; i < currentStep; i++) {
             gameList.dropTile(MOVES[i][0], MOVES[i][1]);
         }
@@ -114,7 +114,7 @@ public class Game_menu extends JFrame {
     }
  
     private void updateUIState() {
-        // 1. Oyun alanını MultiLinkedList üzerinden güncelle
+        // oyun alanını MultiLinkedList üzerinden güncelliyoruz
         for (int r = 0; r < 7; r++) {
             for (int c = 0; c < 5; c++) {
                 int val = gameList.getValueAt(r, c);
@@ -131,7 +131,7 @@ public class Game_menu extends JFrame {
             }
         }
         
-        // 2. Önizleme (Gelecek Taş) Panelini Güncelle
+        // önizleme panelini güncelleme
         for (int j = 0; j < 5; j++) {
             previewCells[j].setText("");
             previewCells[j].setBackground(Color.DARK_GRAY);
@@ -143,15 +143,21 @@ public class Game_menu extends JFrame {
             
             previewCells[nextCol].setText("[" + nextVal + "]");
             previewCells[nextCol].setForeground(Color.WHITE);
-            previewCells[nextCol].setBackground(Color.BLACK); // Düşecek taş belirgin olsun
+            previewCells[nextCol].setBackground(Color.BLACK); // düşecek taş belirgin olsun diye ekledim
             lblStep.setText("Adım " + currentStep + " (Sıradaki: " + nextVal + ")");
-        } else {
+        } else { 
             lblStep.setText("Oyun Bitti!");
+    
+    // oyun bitti mesajı 
+        if (currentStep == MOVES.length) {
+            JOptionPane.showMessageDialog( this,"Tüm hamleler tamamlandı!\nOyun sona erdi.", "Oyun Bitti!",JOptionPane.INFORMATION_MESSAGE);
+            System.exit(0);
+    }
         }
         
-        // Buton durumlarını ayarla
-        btnPrev.setEnabled(currentStep > 0);
-        btnNext.setEnabled(currentStep < MOVES.length);
+        
+        btnPrev.setEnabled(currentStep > 0);//en baştaysak önceki butonunu pasif yapıyoruz     
+        btnNext.setEnabled(currentStep < MOVES.length);//en sondaysak da sonraki butonunu pasif yaparız
     }
  
     private Color getBgColor(int val) {

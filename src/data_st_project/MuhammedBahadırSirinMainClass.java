@@ -1,8 +1,10 @@
 package data_st_project;
 
-public class Data_st_Project {
+public class MuhammedBahadırSirinMainClass {
 
     public static void main(String[] args) {
+        
+        new Game_menu().setVisible(true);
 
         MultiLinkedList game = new MultiLinkedList();
 
